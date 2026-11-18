@@ -1,0 +1,59 @@
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-person-badge me-1"></i>Mi cuenta</div>
+      <div class="card-body">
+        @if (usuario(); as u) {
+          <dl class="row mb-0">
+            <dt class="col-5 text-muted fw-normal">Usuario</dt>
+            <dd class="col-7">{{ u.username }}</dd>
+            <dt class="col-5 text-muted fw-normal">Correo</dt>
+            <dd class="col-7">{{ u.email || '—' }}</dd>
+            <dt class="col-5 text-muted fw-normal">Rol</dt>
+            <dd class="col-7"><span class="badge text-bg-secondary">{{ u.role }}</span></dd>
+            <dt class="col-5 text-muted fw-normal">Creada</dt>
+            <dd class="col-7">{{ u.createdAt | date: 'medium' }}</dd>
+            <dt class="col-5 text-muted fw-normal">Último acceso</dt>
+            <dd class="col-7 mb-0">{{ u.lastLoginAt ? (u.lastLoginAt | date: 'medium') : '—' }}</dd>
+          </dl>
+        } @else {
+          <div class="text-muted">Cargando...</div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-pencil-square me-1"></i>Actualizar datos</div>
+      <div class="card-body">
+        @if (error()) {
+          <div class="alert alert-danger py-2">{{ error() }}</div>
+        }
+        @if (exito()) {
+          <div class="alert alert-success py-2">{{ exito() }}</div>
+        }
+        <form (ngSubmit)="guardar()">
+          <div class="mb-3">
+            <label for="correo" class="form-label">Correo</label>
+            <input id="correo" name="correo" type="email" class="form-control" [(ngModel)]="correo" />
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="clave" class="form-label">Nueva contraseña</label>
+              <input id="clave" name="clave" type="password" class="form-control" [(ngModel)]="clave" autocomplete="new-password" />
+            </div>
+            <div class="col-md-6">
+              <label for="confirmarClave" class="form-label">Confirmar contraseña</label>
+              <input id="confirmarClave" name="confirmarClave" type="password" class="form-control" [(ngModel)]="confirmarClave" autocomplete="new-password" />
+            </div>
+          </div>
+          <div class="form-text mb-3">Deja la contraseña vacía si no la quieres cambiar.</div>
+          <button type="submit" class="btn btn-primary" [disabled]="cargando()">
+            <i class="bi bi-save me-1"></i>Guardar cambios
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
