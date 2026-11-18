@@ -2,12 +2,20 @@ package co.edu.unbosque.parcialfinal.model;
 
 import java.util.Objects;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "lacteo")
 public class Lacteo {
 
+	@Column(unique = true, nullable = false)
 	private Long id;
 	private String nombre;
 	private int cantidad;
 	private Long precio;
+	@Column(unique = true, nullable = false)
 	private String url;
 
 	public Lacteo() {

@@ -1,11 +1,19 @@
 package co.edu.unbosque.parcialfinal.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "carne")
 public class Carne {
 
+	@Column(unique = true, nullable = false)
 	private Long id;
 	private String nombre;
 	private int cantidad;
 	private Long precio;
+	@Column(unique = true, nullable = false)
 	private String url;
 
 	public Carne() {
