@@ -1,149 +1,90 @@
 package co.edu.unbosque.parcialfinal.util;
 
-import static org.apache.commons.codec.binary.Base64.decodeBase64;
-import static org.apache.commons.codec.binary.Base64.encodeBase64;
-
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
+import java.util.Base64;
 import java.security.SecureRandom;
-import java.util.Arrays;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.codec.digest.DigestUtils;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
 public class AESUtil {
 
-  private static final String ALGORITMO = "AES";
+	private static final String ALGORITHM = "AES/GCM/NoPadding";
+	private static final int IV_LENGTH = 12;
+	private static final int TAG_LENGTH = 128;
 
-  private static final String TIPOCIFRADO = "AES/GCM/NoPadding";
+	private final SecretKeySpec secretKey;
 
-  private static final int TAG_BITS = 128;
+	public AESUtil(@Value("${aes.secret-key}") String secret) {
 
-  private static final int RANDOM_IV_BYTES = 12;
+		byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
 
-  private static final SecureRandom RANDOM = new SecureRandom();
+		if (keyBytes.length != 32) {
+			throw new IllegalArgumentException("La clave AES debe tener exactamente 32 bytes");
+		}
 
-  private static volatile String configuredKey;
+		this.secretKey = new SecretKeySpec(keyBytes, "AES");
+	}
 
-  private static volatile String configuredIv;
+	public String cifrar(String texto) {
+		try {
+			byte[] iv = new byte[IV_LENGTH];
+			new SecureRandom().nextBytes(iv);
 
-  private AESUtil() {}
+			Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-  public static void configure(String llave, String iv) {
-    int keyLen = llave == null ? 0 : llave.getBytes(StandardCharsets.UTF_8).length;
-    if (keyLen != 16 && keyLen != 24 && keyLen != 32) {
-      throw new IllegalArgumentException(
-          "aes.key debe tener exactamente 16, 24 o 32 caracteres (tiene " + keyLen + ")");
-    }
-    int ivLen = iv == null ? 0 : iv.getBytes(StandardCharsets.UTF_8).length;
-    if (ivLen != 12 && ivLen != 16) {
-      throw new IllegalArgumentException(
-          "aes.iv debe tener exactamente 12 o 16 caracteres (tiene " + ivLen + ")");
-    }
-    configuredKey = llave;
-    configuredIv = iv;
-  }
+			GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH, iv);
 
-  public static boolean isConfigured() {
-    return configuredKey != null && configuredIv != null;
-  }
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
 
-  public static String encrypt(String llave, String iv, String texto) {
-    try {
-      Cipher cipher = Cipher.getInstance(TIPOCIFRADO);
-      cipher.init(Cipher.ENCRYPT_MODE, keySpec(llave), new GCMParameterSpec(TAG_BITS, bytes(iv)));
-      return new String(encodeBase64(cipher.doFinal(bytes(texto))), StandardCharsets.US_ASCII);
-    } catch (GeneralSecurityException e) {
-      throw new IllegalStateException("No se pudo cifrar el texto", e);
-    }
-  }
+			byte[] textoCifrado = cipher.doFinal(texto.getBytes(StandardCharsets.UTF_8));
 
-  public static String decrypt(String llave, String iv, String encrypted) {
-    try {
-      Cipher cipher = Cipher.getInstance(TIPOCIFRADO);
-      cipher.init(Cipher.DECRYPT_MODE, keySpec(llave), new GCMParameterSpec(TAG_BITS, bytes(iv)));
-      return new String(cipher.doFinal(decodeBase64(encrypted)), StandardCharsets.UTF_8);
-    } catch (GeneralSecurityException | IllegalArgumentException e) {
-      throw new IllegalStateException("No se pudo descifrar el texto", e);
-    }
-  }
+			ByteBuffer buffer = ByteBuffer.allocate(iv.length + textoCifrado.length);
 
-  public static String encrypt(String plainText) {
-    requireConfigured();
-    return encrypt(configuredKey, configuredIv, plainText);
-  }
+			buffer.put(iv);
+			buffer.put(textoCifrado);
 
-  public static String decrypt(String encrypted) {
-    requireConfigured();
-    return decrypt(configuredKey, configuredIv, encrypted);
-  }
+			return Base64.getEncoder().encodeToString(buffer.array());
 
-  public static String encryptWithRandomIv(String plainText) {
-    requireConfigured();
-    try {
-      byte[] iv = new byte[RANDOM_IV_BYTES];
-      RANDOM.nextBytes(iv);
-      Cipher cipher = Cipher.getInstance(TIPOCIFRADO);
-      cipher.init(Cipher.ENCRYPT_MODE, keySpec(configuredKey), new GCMParameterSpec(TAG_BITS, iv));
-      byte[] encrypted = cipher.doFinal(bytes(plainText));
-      byte[] out = new byte[iv.length + encrypted.length];
-      System.arraycopy(iv, 0, out, 0, iv.length);
-      System.arraycopy(encrypted, 0, out, iv.length, encrypted.length);
-      return new String(encodeBase64(out), StandardCharsets.US_ASCII);
-    } catch (GeneralSecurityException e) {
-      throw new IllegalStateException("No se pudo cifrar el texto", e);
-    }
-  }
+		} catch (Exception e) {
+			throw new RuntimeException("Error al cifrar la contraseña", e);
+		}
+	}
 
-  public static String decryptWithRandomIv(String encrypted) {
-    requireConfigured();
-    try {
-      byte[] all = decodeBase64(encrypted);
-      if (all.length <= RANDOM_IV_BYTES) {
-        throw new IllegalStateException("Texto cifrado demasiado corto");
-      }
-      byte[] iv = Arrays.copyOfRange(all, 0, RANDOM_IV_BYTES);
-      byte[] data = Arrays.copyOfRange(all, RANDOM_IV_BYTES, all.length);
-      Cipher cipher = Cipher.getInstance(TIPOCIFRADO);
-      cipher.init(Cipher.DECRYPT_MODE, keySpec(configuredKey), new GCMParameterSpec(TAG_BITS, iv));
-      return new String(cipher.doFinal(data), StandardCharsets.UTF_8);
-    } catch (GeneralSecurityException | IllegalArgumentException e) {
-      throw new IllegalStateException("No se pudo descifrar el texto", e);
-    }
-  }
+	public String descifrar(String textoCifrado) {
+		try {
+			byte[] datos = Base64.getDecoder().decode(textoCifrado);
 
-  public static String hashingToMD5(String content) {
-    return DigestUtils.md5Hex(content);
-  }
+			if (datos.length < IV_LENGTH + 16) {
+				throw new IllegalArgumentException("Datos cifrados inválidos");
+			}
 
-  public static String hashingToSHA1(String content) {
-    return DigestUtils.sha1Hex(content);
-  }
+			ByteBuffer buffer = ByteBuffer.wrap(datos);
 
-  public static String hashingToSHA256(String content) {
-    return DigestUtils.sha256Hex(content);
-  }
+			byte[] iv = new byte[IV_LENGTH];
+			buffer.get(iv);
 
-  public static String hashingToSHA384(String content) {
-    return DigestUtils.sha384Hex(content);
-  }
+			byte[] contenidoCifrado = new byte[buffer.remaining()];
+			buffer.get(contenidoCifrado);
 
-  public static String hashingToSHA512(String content) {
-    return DigestUtils.sha512Hex(content);
-  }
+			Cipher cipher = Cipher.getInstance(ALGORITHM);
 
-  private static void requireConfigured() {
-    if (!isConfigured()) {
-      throw new IllegalStateException("AESUtil no está configurado: faltan aes.key y aes.iv");
-    }
-  }
+			GCMParameterSpec parameterSpec = new GCMParameterSpec(TAG_LENGTH, iv);
 
-  private static SecretKeySpec keySpec(String llave) {
-    return new SecretKeySpec(bytes(llave), ALGORITMO);
-  }
+			cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
 
-  private static byte[] bytes(String s) {
-    return s.getBytes(StandardCharsets.UTF_8);
-  }
+			byte[] textoOriginal = cipher.doFinal(contenidoCifrado);
+
+			return new String(textoOriginal, StandardCharsets.UTF_8);
+
+		} catch (Exception e) {
+			throw new RuntimeException("Error al descifrar la contraseña", e);
+		}
+	}
 }

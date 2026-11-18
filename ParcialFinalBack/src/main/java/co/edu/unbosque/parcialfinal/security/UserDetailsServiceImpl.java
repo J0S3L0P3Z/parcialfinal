@@ -1,27 +1,25 @@
 package co.edu.unbosque.parcialfinal.security;
 
-import co.edu.unbosque.parcialfinal.repository.UserRepository;
-import java.util.Locale;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import co.edu.unbosque.parcialfinal.repository.UsuarioRepository;
+
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
 
-  private final UserRepository userRepository;
+	private final UsuarioRepository usuarioRepository;
 
-  public UserDetailsServiceImpl(UserRepository userRepository) {
-    this.userRepository = userRepository;
-  }
+	public UserDetailsServiceImpl(UsuarioRepository usuarioRepository) {
+		this.usuarioRepository = usuarioRepository;
+	}
 
-  @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    String identifier = username == null ? "" : username.trim();
-    return userRepository
-        .findByUsername(identifier)
-        .or(() -> userRepository.findByEmail(identifier.toLowerCase(Locale.ROOT)))
-        .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + identifier));
-  }
+	@Override
+	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+		return usuarioRepository.findByUsername(username)
+				.orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+	}
 }

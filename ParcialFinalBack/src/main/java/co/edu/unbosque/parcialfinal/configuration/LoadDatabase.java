@@ -1,68 +1,45 @@
 package co.edu.unbosque.parcialfinal.configuration;
 
-import co.edu.unbosque.parcialfinal.model.User;
-import co.edu.unbosque.parcialfinal.repository.UserRepository;
-import java.util.Locale;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
-@Configuration
-public class LoadDatabase {
+import co.edu.unbosque.parcialfinal.entity.Rol;
+import co.edu.unbosque.parcialfinal.entity.Usuario;
+import co.edu.unbosque.parcialfinal.repository.UsuarioRepository;
+import co.edu.unbosque.parcialfinal.util.AESUtil;
 
-  private static final Logger log = LoggerFactory.getLogger(LoadDatabase.class);
+@Component
+public class LoadDataBase implements CommandLineRunner {
 
-  @Value("${app.seed.admin-username:}")
-  private String adminUsername;
+	private final UsuarioRepository usuarioRepository;
+	private final AESUtil aesUtil;
 
-  @Value("${app.seed.admin-email:}")
-  private String adminEmail;
+	@Value("${app.admin.username}")
+	private String adminUsername;
 
-  @Value("${app.seed.admin-password:}")
-  private String adminPassword;
+	@Value("${app.admin.password}")
+	private String adminPassword;
 
-  @Value("${app.seed.user-username:}")
-  private String userUsername;
+	public LoadDataBase(UsuarioRepository usuarioRepository, AESUtil aesUtil) {
+		this.usuarioRepository = usuarioRepository;
+		this.aesUtil = aesUtil;
+	}
 
-  @Value("${app.seed.user-email:}")
-  private String userEmail;
+	@Override
+	public void run(String[] args) {
 
-  @Value("${app.seed.user-password:}")
-  private String userPassword;
+		if (!usuarioRepository.existsByUsername(adminUsername)) {
 
-  @Bean
-  CommandLineRunner initDatabase(UserRepository userRepo, PasswordEncoder passwordEncoder) {
-    return args -> {
-      createIfMissing(userRepo, passwordEncoder, adminUsername, adminEmail, adminPassword, User.Role.ADMIN);
-      createIfMissing(userRepo, passwordEncoder, userUsername, userEmail, userPassword, User.Role.USER);
-    };
-  }
+			Usuario administrador = new Usuario();
 
-  private void createIfMissing(
-      UserRepository repo,
-      PasswordEncoder encoder,
-      String username,
-      String email,
-      String password,
-      User.Role role) {
-    if (isBlank(username) || isBlank(password)) return;
-    String name = username.trim();
-    String mail = isBlank(email) ? null : email.trim().toLowerCase(Locale.ROOT);
-    if (repo.findByUsername(name).isPresent() || (mail != null && repo.existsByEmail(mail))) {
-      log.info("El usuario {} ya existe, omitiendo su creación...", name);
-      return;
-    }
-    User user = new User(name, encoder.encode(password), role);
-    user.setEmail(mail);
-    repo.save(user);
-    log.info("Precargando usuario {} con rol {}", name, role);
-  }
+			administrador.setUsername(adminUsername);
+			administrador.setNombre("Administrador");
+			administrador.setApellido("Sistema");
+			administrador.setPassword(aesUtil.cifrar(adminPassword));
+			administrador.setRole(Rol.ADMIN);
 
-  private static boolean isBlank(String s) {
-    return s == null || s.isBlank();
-  }
+			usuarioRepository.save(administrador);
+		}
+	}
 }
