@@ -1,0 +1,95 @@
+<h1>Tienda de Barrio</h1>
+<p>
+  Usuario: {{ auth.username() }} ({{ auth.isAdmin() ? 'Vendedor - ADMIN' : 'Cliente - USER' }})
+  <button type="button" (click)="salir()">Cerrar sesión</button>
+</p>
+
+@if (error()) {
+  <p>Error: {{ error() }}</p>
+}
+@if (exito()) {
+  <p>{{ exito() }}</p>
+}
+
+@if (auth.isAdmin()) {
+  <h2>{{ editandoId !== null ? 'Editar producto ' + editandoId : 'Nuevo producto' }}</h2>
+  <form (ngSubmit)="guardar()">
+    <p>
+      <label for="formTipo">Tipo</label><br />
+      <select id="formTipo" name="formTipo" [(ngModel)]="formTipo" [disabled]="editandoId !== null">
+        <option value="lacteo">Lácteo</option>
+        <option value="carne">Carne</option>
+      </select>
+    </p>
+    <p>
+      <label for="formNombre">Nombre</label><br />
+      <input id="formNombre" name="formNombre" [(ngModel)]="formNombre" />
+    </p>
+    <p>
+      <label for="formCantidad">Cantidad</label><br />
+      <input id="formCantidad" name="formCantidad" type="number" min="0" [(ngModel)]="formCantidad" />
+    </p>
+    <p>
+      <label for="formPrecio">Precio</label><br />
+      <input id="formPrecio" name="formPrecio" type="number" min="0" [(ngModel)]="formPrecio" />
+    </p>
+    <p>
+      <label for="formUrlImagen">URL de la imagen</label><br />
+      <input id="formUrlImagen" name="formUrlImagen" size="60" [(ngModel)]="formUrlImagen" placeholder="https://..." />
+    </p>
+    <button type="submit">Guardar</button>
+    <button type="button" (click)="limpiarFormulario()">Cancelar</button>
+  </form>
+}
+
+<ng-template #tabla let-tipo="tipo" let-titulo="titulo" let-lista="lista">
+  <h2>{{ titulo }}</h2>
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Foto</th>
+        <th>Id</th>
+        <th>Nombre</th>
+        <th>Cantidad</th>
+        <th>Precio</th>
+        <th>URL imagen</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of lista; track p.id) {
+        <tr>
+          <td><img [src]="p.urlImagen" [alt]="p.nombre" width="80" height="80" /></td>
+          <td>{{ p.id }}</td>
+          <td>{{ p.nombre }}</td>
+          <td>{{ p.cantidad > 0 ? p.cantidad : 'Agotado' }}</td>
+          <td>{{ p.precio | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
+          <td><a [href]="p.urlImagen" target="_blank" rel="noopener">Ver imagen</a></td>
+          <td>
+            @if (auth.isAdmin()) {
+              <button type="button" (click)="editar(tipo, p)">Editar</button>
+              <button type="button" (click)="eliminar(tipo, p)">Eliminar</button>
+            } @else {
+              <input
+                type="number"
+                min="1"
+                [max]="p.cantidad"
+                size="4"
+                [name]="clave(tipo, p)"
+                [(ngModel)]="cantidades[clave(tipo, p)]"
+                placeholder="1"
+                [disabled]="p.cantidad === 0"
+              />
+              <button type="button" [disabled]="p.cantidad === 0" (click)="comprar(tipo, p)">Comprar</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="7">No hay productos</td></tr>
+      }
+    </tbody>
+  </table>
+</ng-template>
+
+<ng-container *ngTemplateOutlet="tabla; context: { tipo: 'lacteo', titulo: 'Lácteos', lista: lacteos() }"></ng-container>
+<ng-container *ngTemplateOutlet="tabla; context: { tipo: 'carne', titulo: 'Carnes', lista: carnes() }"></ng-container>

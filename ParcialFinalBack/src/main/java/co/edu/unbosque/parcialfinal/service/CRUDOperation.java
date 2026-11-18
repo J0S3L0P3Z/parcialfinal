@@ -4,15 +4,15 @@ import java.util.List;
 
 public interface CRUDOperation<T> {
 
-  public int create(T data);
+	public int create(T data);
 
-  public List<T> getAll();
+	public List<T> getAll();
 
-  public int deleteById(Long id);
+	public int deleteById(Long id);
 
-  public int updateById(Long id, T newData);
+	public int updateById(Long id, T newData);
 
-  public long count();
+	public long count();
 
-  public boolean exist(Long id);
+	public boolean exist(Long id);
 }

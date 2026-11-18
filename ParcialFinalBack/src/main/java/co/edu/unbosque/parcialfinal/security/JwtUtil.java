@@ -1,39 +1,30 @@
 package co.edu.unbosque.parcialfinal.security;
 
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import javax.crypto.SecretKey;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import co.edu.unbosque.parcialfinal.entity.Usuario;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 @Component
 public class JwtUtil {
 
-	private static final long JWT_TOKEN_VALIDITY = 12 * 60 * 60 * 1000;
+	private static final long JWT_TOKEN_VALIDITY = 24 * 60 * 60 * 1000;
 
 	@Value("${jwt.secret}")
 	private String secret;
 
-	private SecretKey getSigningKey() {
-
-		byte[] keyBytes = secret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-
-		if (keyBytes.length < 32) {
-			throw new IllegalArgumentException("La clave JWT debe tener mínimo 32 bytes.");
-		}
-
-		return Keys.hmacShaKeyFor(keyBytes);
+	private Key getSigningKey() {
+		return Keys.hmacShaKeyFor(secret.getBytes());
 	}
 
 	public String extractUsername(String token) {
@@ -44,20 +35,13 @@ public class JwtUtil {
 		return extractClaim(token, Claims::getExpiration);
 	}
 
-	public String extractRole(String token) {
-		return extractClaim(token, claims -> claims.get("role", String.class));
-	}
-
 	public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-
-		Claims claims = extractAllClaims(token);
-
+		final Claims claims = extractAllClaims(token);
 		return claimsResolver.apply(claims);
 	}
 
 	private Claims extractAllClaims(String token) {
-
-		return Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token).getPayload();
+		return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
 	}
 
 	private Boolean isTokenExpired(String token) {
@@ -65,33 +49,19 @@ public class JwtUtil {
 	}
 
 	public String generateToken(UserDetails userDetails) {
-
 		Map<String, Object> claims = new HashMap<>();
-
-		if (userDetails instanceof Usuario) {
-
-			Usuario usuario = (Usuario) userDetails;
-
-			claims.put("role", usuario.getRole().name());
-		}
-
+		claims.put("authorities", userDetails.getAuthorities());
 		return createToken(claims, userDetails.getUsername());
 	}
 
 	private String createToken(Map<String, Object> claims, String subject) {
-
-		Date fechaActual = new Date();
-
-		Date fechaExpiracion = new Date(fechaActual.getTime() + JWT_TOKEN_VALIDITY);
-
-		return Jwts.builder().claims(claims).subject(subject).issuedAt(fechaActual).expiration(fechaExpiracion)
-				.signWith(getSigningKey()).compact();
+		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
+				.setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
+				.signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
 	}
 
 	public Boolean validateToken(String token, UserDetails userDetails) {
-
-		String username = extractUsername(token);
-
-		return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+		final String username = extractUsername(token);
+		return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
 	}
 }

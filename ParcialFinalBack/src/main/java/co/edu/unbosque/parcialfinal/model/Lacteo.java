@@ -2,33 +2,30 @@ package co.edu.unbosque.parcialfinal.model;
 
 import java.util.Objects;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "lacteo")
 public class Lacteo {
 
-	@Column(unique = true, nullable = false)
-	private Long id;
+	private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id;
 	private String nombre;
 	private int cantidad;
-	private Long precio;
-	@Column(unique = true, nullable = false)
-	private String url;
+	private double precio;
+	private String urlImagen;
 
 	public Lacteo() {
-		// TODO Auto-generated constructor stub
 	}
 
-	public Lacteo(Long id, String nombre, int cantidad, Long precio, String url) {
-		super();
-		this.id = id;
+	public Lacteo(String nombre, int cantidad, double precio, String urlImagen) {
 		this.nombre = nombre;
 		this.cantidad = cantidad;
 		this.precio = precio;
-		this.url = url;
+		this.urlImagen = urlImagen;
 	}
 
 	public Long getId() {
@@ -55,25 +52,25 @@ public class Lacteo {
 		this.cantidad = cantidad;
 	}
 
-	public Long getPrecio() {
+	public double getPrecio() {
 		return precio;
 	}
 
-	public void setPrecio(Long precio) {
+	public void setPrecio(double precio) {
 		this.precio = precio;
 	}
 
-	public String getUrl() {
-		return url;
+	public String getUrlImagen() {
+		return urlImagen;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
+	public void setUrlImagen(String urlImagen) {
+		this.urlImagen = urlImagen;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(Integer.valueOf(cantidad), id, nombre, precio, url);
+		return Objects.hash(cantidad, id, nombre, precio, urlImagen);
 	}
 
 	@Override
@@ -86,13 +83,13 @@ public class Lacteo {
 			return false;
 		Lacteo other = (Lacteo) obj;
 		return cantidad == other.cantidad && Objects.equals(id, other.id) && Objects.equals(nombre, other.nombre)
-				&& Objects.equals(precio, other.precio) && Objects.equals(url, other.url);
+				&& Double.doubleToLongBits(precio) == Double.doubleToLongBits(other.precio)
+				&& Objects.equals(urlImagen, other.urlImagen);
 	}
 
 	@Override
 	public String toString() {
-		return "Lacteo [id=" + id + ", nombre=" + nombre + ", cantidad=" + cantidad + ", precio=" + precio + ", url="
-				+ url + "]";
+		return "Lacteo [id=" + id + ", nombre=" + nombre + ", cantidad=" + cantidad + ", precio=" + precio
+				+ ", urlImagen=" + urlImagen + "]";
 	}
-
 }

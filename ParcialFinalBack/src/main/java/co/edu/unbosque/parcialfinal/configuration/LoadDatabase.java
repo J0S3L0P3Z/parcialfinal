@@ -1,45 +1,59 @@
 package co.edu.unbosque.parcialfinal.configuration;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import co.edu.unbosque.parcialfinal.entity.Rol;
-import co.edu.unbosque.parcialfinal.entity.Usuario;
-import co.edu.unbosque.parcialfinal.repository.UsuarioRepository;
-import co.edu.unbosque.parcialfinal.util.AESUtil;
+import co.edu.unbosque.parcialfinal.model.Carne;
+import co.edu.unbosque.parcialfinal.model.Lacteo;
+import co.edu.unbosque.parcialfinal.model.User;
+import co.edu.unbosque.parcialfinal.model.User.Role;
+import co.edu.unbosque.parcialfinal.repository.CarneRepository;
+import co.edu.unbosque.parcialfinal.repository.LacteoRepository;
+import co.edu.unbosque.parcialfinal.repository.UserRepository;
 
-@Component
-public class LoadDataBase implements CommandLineRunner {
+@Configuration
+public class LoadDatabase {
 
-	private final UsuarioRepository usuarioRepository;
-	private final AESUtil aesUtil;
+	private static final Logger log = LoggerFactory.getLogger(LoadDatabase.class);
 
-	@Value("${app.admin.username}")
-	private String adminUsername;
+	@Bean
+	CommandLineRunner initDatabase(UserRepository userRepo, LacteoRepository lacteoRepo, CarneRepository carneRepo,
+			PasswordEncoder passwordEncoder) {
 
-	@Value("${app.admin.password}")
-	private String adminPassword;
+		return args -> {
+			if (userRepo.findByUsername("admin").isPresent()) {
+				log.info("Admin ya existe, no se crea ...");
+			} else {
+				userRepo.save(new User("admin", passwordEncoder.encode("admin123"), Role.ADMIN));
+				log.info("Precargando usuario admin (vendedor)");
+			}
 
-	public LoadDataBase(UsuarioRepository usuarioRepository, AESUtil aesUtil) {
-		this.usuarioRepository = usuarioRepository;
-		this.aesUtil = aesUtil;
-	}
+			if (userRepo.findByUsername("cliente").isPresent()) {
+				log.info("Cliente ya existe, no se crea ...");
+			} else {
+				userRepo.save(new User("cliente", passwordEncoder.encode("cliente123"), Role.USER));
+				log.info("Precargando usuario cliente");
+			}
 
-	@Override
-	public void run(String[] args) {
+			if (lacteoRepo.count() == 0) {
+				lacteoRepo.save(new Lacteo("Leche entera 1L", 30, 4500,
+						"https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400"));
+				lacteoRepo.save(new Lacteo("Queso campesino 500g", 15, 12000,
+						"https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400"));
+				log.info("Precargando lacteos");
+			}
 
-		if (!usuarioRepository.existsByUsername(adminUsername)) {
-
-			Usuario administrador = new Usuario();
-
-			administrador.setUsername(adminUsername);
-			administrador.setNombre("Administrador");
-			administrador.setApellido("Sistema");
-			administrador.setPassword(aesUtil.cifrar(adminPassword));
-			administrador.setRole(Rol.ADMIN);
-
-			usuarioRepository.save(administrador);
-		}
+			if (carneRepo.count() == 0) {
+				carneRepo.save(new Carne("Carne de res 1kg", 12, 32000,
+						"https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400"));
+				carneRepo.save(new Carne("Pechuga de pollo 1kg", 18, 18000,
+						"https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=400"));
+				log.info("Precargando carnes");
+			}
+		};
 	}
 }

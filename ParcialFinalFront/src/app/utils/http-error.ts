@@ -7,17 +7,12 @@ export function errorMessage(err: unknown, fallback = 'Ocurrió un error inesper
   if (err.status === 0) {
     return 'No se pudo conectar con el servidor';
   }
+  if (err.status === 403) {
+    return 'No tienes permisos para esta acción';
+  }
   const body = err.error;
   if (typeof body === 'string' && body.trim()) {
-    try {
-      const parsed = JSON.parse(body);
-      return parsed?.message ?? body;
-    } catch {
-      return body;
-    }
-  }
-  if (body && typeof body === 'object' && 'message' in body) {
-    return String((body as { message: unknown }).message);
+    return body;
   }
   return fallback;
 }

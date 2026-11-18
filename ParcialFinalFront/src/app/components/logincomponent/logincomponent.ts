@@ -6,7 +6,6 @@ import { errorMessage } from '../../utils/http-error';
 @Component({
   selector: 'app-logincomponent',
   standalone: false,
-  styleUrl: './logincomponent.css',
   templateUrl: './logincomponent.html',
 })
 export class Logincomponent {
@@ -23,15 +22,15 @@ export class Logincomponent {
 
   iniciarSesion() {
     if (!this.usuario.trim() || !this.clave) {
-      this.error.set('Escribe tu usuario (o correo) y tu contraseña.');
+      this.error.set('Escribe tu usuario y tu contraseña.');
       return;
     }
     this.cargando.set(true);
     this.error.set('');
     this.auth.login({ username: this.usuario.trim(), password: this.clave }).subscribe({
-      next: () => this.router.navigate(['/inicio']),
+      next: () => this.router.navigate(['/tienda']),
       error: (err) => {
-        this.error.set(errorMessage(err, 'No se pudo iniciar sesión'));
+        this.error.set(errorMessage(err, 'Usuario o contraseña incorrectos'));
         this.cargando.set(false);
       },
     });

@@ -3,7 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuthResponse, LoginRequest, Session, UserForm } from '../models/models';
+import { AuthResponse, LoginRequest, Session } from '../models/models';
 
 const STORAGE_KEY = 'session';
 
@@ -29,8 +29,8 @@ export class AuthService {
         const session: Session = {
           token: res.token,
           role: res.role,
-          username: res.username,
-          expiresAt: Date.now() + res.expiresInMinutes * 60 * 1000,
+          username: data.username,
+          expiresAt: this.leerExpiracion(res.token),
         };
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
         this.sessionState.set(session);
@@ -38,7 +38,7 @@ export class AuthService {
     );
   }
 
-  register(data: UserForm): Observable<string> {
+  register(data: LoginRequest): Observable<string> {
     return this.http.post(`${this.api}/register`, data, { responseType: 'text' });
   }
 
@@ -47,9 +47,6 @@ export class AuthService {
   }
 
   logout(): void {
-    if (this.isLoggedIn()) {
-      this.http.post(`${environment.apiUrl}/user/logout`, {}).subscribe({ error: () => undefined });
-    }
     this.clear();
     this.router.navigate(['/login']);
   }
@@ -57,6 +54,15 @@ export class AuthService {
   clear(): void {
     sessionStorage.removeItem(STORAGE_KEY);
     this.sessionState.set(null);
+  }
+
+  private leerExpiracion(token: string): number {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.exp * 1000;
+    } catch {
+      return 0;
+    }
   }
 
   private readSession(): Session | null {

@@ -22,7 +22,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final UserDetailsService userDetailsService;
 
 	public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-
 		this.jwtUtil = jwtUtil;
 		this.userDetailsService = userDetailsService;
 	}
@@ -37,27 +36,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String jwt = null;
 
 		if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-
 			jwt = authorizationHeader.substring(7);
-
 			try {
 				username = jwtUtil.extractUsername(jwt);
 			} catch (Exception e) {
-				logger.error("Error al extraer el usuario del token", e);
+				logger.error("Error extrayendo el usuario del token", e);
 			}
 		}
 
 		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+			UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-			if (jwtUtil.validateToken(jwt, userDetails) && userDetails.isEnabled()) {
-
+			if (jwtUtil.validateToken(jwt, userDetails)) {
 				UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
 						userDetails, null, userDetails.getAuthorities());
-
 				authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
 				SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 			}
 		}

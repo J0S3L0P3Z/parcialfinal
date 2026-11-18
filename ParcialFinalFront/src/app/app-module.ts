@@ -6,27 +6,11 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing-module';
 import { App } from './app';
 import { authInterceptor } from './services/auth.interceptor';
-import { Navbarcomponent } from './components/navbarcomponent/navbarcomponent';
 import { Logincomponent } from './components/logincomponent/logincomponent';
-import { Registrocomponent } from './components/registrocomponent/registrocomponent';
-import { Iniciocomponent } from './components/iniciocomponent/iniciocomponent';
-import { Perfilcomponent } from './components/perfilcomponent/perfilcomponent';
-import { Apiexternacomponent } from './components/apiexternacomponent/apiexternacomponent';
-import { Usuarioscomponent } from './components/usuarioscomponent/usuarioscomponent';
-import { Auditoriacomponent } from './components/auditoriacomponent/auditoriacomponent';
+import { Tiendacomponent } from './components/tiendacomponent/tiendacomponent';
 
 @NgModule({
-  declarations: [
-    App,
-    Navbarcomponent,
-    Logincomponent,
-    Registrocomponent,
-    Iniciocomponent,
-    Perfilcomponent,
-    Apiexternacomponent,
-    Usuarioscomponent,
-    Auditoriacomponent,
-  ],
+  declarations: [App, Logincomponent, Tiendacomponent],
   imports: [BrowserModule, CommonModule, FormsModule, AppRoutingModule],
   providers: [provideBrowserGlobalErrorListeners(), provideHttpClient(withInterceptors([authInterceptor]))],
   bootstrap: [App],

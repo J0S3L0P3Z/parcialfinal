@@ -1,24 +1,23 @@
 package co.edu.unbosque.parcialfinal.dto;
 
+import java.util.Objects;
+
 public class CarneDTO {
 
 	private Long id;
 	private String nombre;
 	private int cantidad;
-	private Long precio;
-	private String url;
+	private double precio;
+	private String urlImagen;
 
 	public CarneDTO() {
-		// TODO Auto-generated constructor stub
 	}
 
-	public CarneDTO(Long id, String nombre, int cantidad, Long precio, String url) {
-		super();
-		this.id = id;
+	public CarneDTO(String nombre, int cantidad, double precio, String urlImagen) {
 		this.nombre = nombre;
 		this.cantidad = cantidad;
 		this.precio = precio;
-		this.url = url;
+		this.urlImagen = urlImagen;
 	}
 
 	public Long getId() {
@@ -45,38 +44,44 @@ public class CarneDTO {
 		this.cantidad = cantidad;
 	}
 
-	public Long getPrecio() {
+	public double getPrecio() {
 		return precio;
 	}
 
-	public void setPrecio(Long precio) {
+	public void setPrecio(double precio) {
 		this.precio = precio;
 	}
 
-	public String getUrl() {
-		return url;
+	public String getUrlImagen() {
+		return urlImagen;
 	}
 
-	public void setUrl(String url) {
-		this.url = url;
+	public void setUrlImagen(String urlImagen) {
+		this.urlImagen = urlImagen;
 	}
 
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
-		return super.hashCode();
+		return Objects.hash(cantidad, id, nombre, precio, urlImagen);
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		// TODO Auto-generated method stub
-		return super.equals(obj);
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CarneDTO other = (CarneDTO) obj;
+		return cantidad == other.cantidad && Objects.equals(id, other.id) && Objects.equals(nombre, other.nombre)
+				&& Double.doubleToLongBits(precio) == Double.doubleToLongBits(other.precio)
+				&& Objects.equals(urlImagen, other.urlImagen);
 	}
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
-		return super.toString();
+		return "CarneDTO [id=" + id + ", nombre=" + nombre + ", cantidad=" + cantidad + ", precio=" + precio
+				+ ", urlImagen=" + urlImagen + "]";
 	}
-
 }
