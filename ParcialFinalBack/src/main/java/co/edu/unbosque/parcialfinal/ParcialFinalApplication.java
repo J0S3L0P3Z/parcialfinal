@@ -4,9 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class ParcialFinalApplication {
+public class ParcialfinalApplication {
 
-  public static void main(String[] args) {
-    SpringApplication.run(ParcialFinalApplication.class, args);
-  }
+	public static void main(String[] args) {
+		SpringApplication.run(ParcialfinalApplication.class, args);
+	}
+
 }
